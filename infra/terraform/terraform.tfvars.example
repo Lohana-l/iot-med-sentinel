@@ -1,0 +1,24 @@
+# ----------------------------------------------------------------------------
+# Variables d'exemple : copier vers <env>.auto.tfvars (jamais commite) et
+# renseigner. Le mot de passe ne se pose PAS ici en production : utiliser
+# AWS Secrets Manager et l'injecter via TF_VAR_db_password.
+# ----------------------------------------------------------------------------
+
+environment  = "dev"
+aws_region   = "eu-west-3"
+project_name = "vigistock"
+
+# RDS / TimescaleDB
+db_instance_class    = "db.t3.medium"
+db_allocated_storage = 20
+# db_password : exporter TF_VAR_db_password plutot que de l'ecrire ici.
+
+# MSK
+kafka_instance_type = "kafka.t3.small"
+kafka_broker_count  = 1
+
+# ECS
+streamlit_cpu    = 512
+streamlit_memory = 1024
+dagster_cpu      = 1024
+dagster_memory   = 2048
