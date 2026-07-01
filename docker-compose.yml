@@ -1,0 +1,311 @@
+# ----------------------------------------------------------------------------
+# Suivi IoT & Prévention des ruptures de médicaments : stack locale.
+# Monte le pipeline complet sur un laptop développeur : streaming + entrepôt
+# + ML + LLM + dashboards. Tout OSS, zéro facturation cloud.
+# ----------------------------------------------------------------------------
+
+services:
+
+  # --- Bus de streaming -------------------------------------------------
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.1
+    container_name: vigistock-redpanda
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+      - --pandaproxy-addr=0.0.0.0:8082
+      - --advertise-pandaproxy-addr=redpanda:8082
+    ports:
+      - "9092:9092"     # API Kafka
+      - "8081:8081"     # Registre de schémas
+      - "8082:8082"     # Proxy REST
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "info"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- Entrepôt time-series --------------------------------------------
+  timescaledb:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: vigistock-timescale
+    environment:
+      POSTGRES_DB: ${TIMESCALE_DB:-vigistock}
+      POSTGRES_USER: ${TIMESCALE_USER:-vigistock}
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+      - ./sql/timescale:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-vigistock} -d ${TIMESCALE_DB:-vigistock}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- Stockage objets (protocoles PDF, artefacts modèles) --------------
+  minio:
+    image: minio/minio:RELEASE.2024-12-13T22-19-12Z
+    container_name: vigistock-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- Initialisation base : schéma + référentiels ----------------------
+  # One-shot idempotent : rejoue le DDL (utile quand le schéma évolue sur un
+  # volume existant) puis seede dimensions, lots et historique de dispensation.
+  # C'est lui qui permet aux JOIN du dashboard de servir du live : sans
+  # référentiels, toutes les requêtes retombent sur le mock.
+  db-init:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    container_name: vigistock-db-init
+    env_file: .env
+    volumes:
+      - ./:/app
+    command: bash -c "python scripts/apply_schema.py && python -m scripts.seed_dimensions"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    restart: "no"
+
+  # --- LLM (local) : modèle de langage en local -------------------------
+  ollama:
+    image: ollama/ollama:0.5.4
+    container_name: vigistock-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    # Les modèles sont téléchargés par le service ollama-bootstrap.
+    # Accélération GPU détectée automatiquement ; repli CPU sur laptop.
+
+  # --- Magasin vectoriel -----------------------------------------------
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    container_name: vigistock-chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+
+  # --- Dashboards temps réel -------------------------------------------
+  grafana:
+    image: grafana/grafana-oss:11.4.0
+    container_name: vigistock-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS:         ""
+      # Consultation anonyme (rôle Viewer) : dashboards lisibles sans login,
+      # pratique pour une démo et pour la capture reproductible des visuels.
+      GF_AUTH_ANONYMOUS_ENABLED:   "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE:  "Viewer"
+      # Consommées par la datasource provisionnée (provisioning/datasources/timescale.yml)
+      TIMESCALE_USER:             ${TIMESCALE_USER:-vigistock}
+      TIMESCALE_PASSWORD:         ${TIMESCALE_PASSWORD:-change-me}
+      TIMESCALE_DB:               ${TIMESCALE_DB:-vigistock}
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./dashboards/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  # --- Orchestration (serveur web Dagster + daemon) --------------------
+  dagster:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    container_name: vigistock-dagster
+    env_file: .env
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./:/app
+      - dagster-home:/opt/dagster/dagster_home
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    command: >
+      bash -c "
+        dagster-webserver -h 0.0.0.0 -p 3000 -w /app/orchestration/dagster/workspace.yaml
+      "
+
+  # --- Simulateur IoT : producteur de télémétrie vers Redpanda ---------
+  # Sans ce service, aucune donnée n'entre dans le pipeline : Streamlit
+  # retombe silencieusement sur le mock. C'est LE producteur par défaut.
+  simulator:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    container_name: vigistock-simulator
+    env_file: .env
+    volumes:
+      - ./:/app
+    command: python -m simulator.run
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- Consumer streaming : Redpanda vers TimescaleDB (silver.*) ----------
+  # Lit `coldchain.telemetry`, écrit `silver.telemetry_raw`, détecte les
+  # anomalies, ouvre/ferme `silver.alerts`. Sans lui, les tables restent
+  # vides et le Streamlit ne voit rien.
+  streaming-consumer:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    container_name: vigistock-streaming-consumer
+    env_file: .env
+    volumes:
+      - ./:/app
+    command: python -m streaming.consumer
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      timescaledb:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      simulator:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- Application pharmacien (Streamlit, multipage) ------------------
+  streamlit:
+    build:
+      context: .
+      dockerfile: dashboards/streamlit/Dockerfile
+    container_name: vigistock-streamlit
+    env_file: .env
+    environment:
+      # Live par défaut : le pipeline est seedé par db-init, l'UI doit servir
+      # les vraies tables. Le repli mock reste automatique si la base tombe.
+      USE_MOCK_DATA: "${USE_MOCK_DATA:-false}"
+      USE_LLM_MOCK:  "${USE_LLM_MOCK:-false}"
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/app
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 6
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      streaming-consumer:
+        condition: service_started
+      dagster-daemon:
+        condition: service_started
+      llm-indexer:
+        condition: service_completed_successfully
+
+  # --- Daemon Dagster : scheduler + sensors -----------------------------
+  # Fait tourner les jobs (Prophet, ingestion FDA/ANSM, asset checks).
+  # Sans lui, `gold.v_forecast_latest` reste vide, donc pages Prévision et
+  # Qualité des données tombent sur le mock.
+  dagster-daemon:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    container_name: vigistock-dagster-daemon
+    env_file: .env
+    volumes:
+      - ./:/app
+      - dagster-home:/opt/dagster/dagster_home
+    command: dagster-daemon run
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      dagster:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- Bootstrap Ollama : télécharge le modèle de chat au premier démarrage --
+  # One-shot : se termine après le `ollama pull` (idempotent : skip si déjà là).
+  # Les embeddings tournent en local via sentence-transformers (bge-small-en), hors Ollama.
+  ollama-bootstrap:
+    image: ollama/ollama:0.5.4
+    container_name: vigistock-ollama-bootstrap
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "until ollama list >/dev/null 2>&1; do sleep 2; done;
+       ollama pull phi3:mini"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  # --- Indexeur RAG : remplit ChromaDB avec les protocoles cliniques -------
+  # One-shot au démarrage : sans lui, ChromaDB vide, donc Brief SBAR mock.
+  llm-indexer:
+    build:
+      context: .
+      dockerfile: orchestration/Dockerfile
+    container_name: vigistock-llm-indexer
+    env_file: .env
+    volumes:
+      - ./:/app
+    command: python -m llm.indexer.run --source protocols/seed
+    depends_on:
+      chromadb:
+        condition: service_started
+      ollama-bootstrap:
+        condition: service_completed_successfully
+    restart: "no"
+
+volumes:
+  timescale-data:
+  minio-data:
+  ollama-data:
+  chroma-data:
+  grafana-data:
+  dagster-home:
