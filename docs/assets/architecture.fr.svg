@@ -1,0 +1,143 @@
+<svg viewBox="0 0 1200 700" width="1200" height="700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma d'architecture Vigistock">
+  <title>Vigistock : chaîne du froid, prévision des ruptures et RAG clinique</title>
+  <defs>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#E6EEED"/></pattern>
+    <marker id="chT" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M2 1.5 L8 5 L2 8.5" fill="none" stroke="#0F766E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="chI" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M2 1.5 L8 5 L2 8.5" fill="none" stroke="#6366F1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="chG" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M2 1.5 L8 5 L2 8.5" fill="none" stroke="#94A3B8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <style>
+      text { font-family:'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif; }
+      .h1 { font-size:25px; font-weight:700; fill:#134E4A; }
+      .h2 { font-size:13px; fill:#5C7470; }
+      .lab { font-size:10.5px; font-weight:600; letter-spacing:1.5px; }
+      .bt { font-size:13px; font-weight:700; fill:#134E4A; }
+      .bl { font-size:11.5px; fill:#46615D; }
+      .sm { font-size:10.5px; fill:#7F9591; }
+      .risk { font-size:11.5px; font-weight:700; fill:#E11D48; }
+      .mono { }
+      .flowT { stroke:#14B8A6; stroke-width:1.8; fill:none; }
+      .flowI { stroke:#818CF8; stroke-width:1.8; fill:none; }
+      .flowG { stroke:#94A3B8; stroke-width:1.8; fill:none; }
+      .dot { stroke:#0F766E; stroke-width:1.8; fill:none; stroke-dasharray:1.5 6; stroke-linecap:round; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="#FFFFFF"/>
+  <rect width="1200" height="700" fill="url(#dots)"/>
+
+  <!-- en-tête -->
+  <rect x="48" y="36" width="245" height="26" rx="6" fill="#99F6E4" opacity="0.55" transform="rotate(-0.6 170 49)"/>
+  <text x="56" y="57" class="h1">Vigistock</text>
+  <text x="312" y="57" class="h2">: chaîne du froid, prévision des ruptures, RAG clinique</text>
+  <text x="56" y="82" class="h2">Streaming + ML + LLM pour les pharmacies hospitalières, 100% open source gratuit</text>
+
+  <!-- étiquettes d'étapes -->
+  <text x="120" y="122" class="lab" text-anchor="middle" fill="#0F766E">CAPTER</text>
+  <text x="315" y="122" class="lab" text-anchor="middle" fill="#0F766E">STREAMING</text>
+  <text x="515" y="122" class="lab" text-anchor="middle" fill="#BE123C">DÉTECTER</text>
+  <text x="715" y="122" class="lab" text-anchor="middle" fill="#0F766E">STOCKER</text>
+  <text x="912" y="122" class="lab" text-anchor="middle" fill="#4F46E5">PRÉDIRE, EXPLIQUER</text>
+  <text x="1100" y="122" class="lab" text-anchor="middle" fill="#059669">AGIR</text>
+
+  <!-- rangée A : streaming -->
+  <rect x="40" y="132" width="160" height="150" rx="12" fill="#F0FDFA" stroke="#7BD9CB" stroke-width="1.5"/>
+  <text x="56" y="160" class="bt">Capteurs frigo</text>
+  <text x="56" y="184" class="bl">simulateur SimPy</text>
+  <text x="56" y="202" class="bl">temp. + humidité</text>
+  <text x="56" y="220" class="bl">toutes les 30 s</text>
+
+  <rect x="240" y="132" width="150" height="150" rx="12" fill="#F0FDFA" stroke="#7BD9CB" stroke-width="1.5"/>
+  <text x="256" y="160" class="bt">Redpanda</text>
+  <text x="256" y="184" class="bl">bus compatible Kafka</text>
+  <text x="256" y="202" class="sm mono">topic: coldchain.telemetry</text>
+
+  <rect x="430" y="132" width="170" height="150" rx="12" fill="#FFF5F4" stroke="#F8B0A8" stroke-width="1.5"/>
+  <text x="446" y="160" class="bt">Consumer streaming</text>
+  <text x="446" y="184" class="bl">détection d'excursions</text>
+  <text x="446" y="202" class="risk mono">BREAKAGE_RISK</text>
+  <text x="446" y="220" class="bl">lots marqués suspects</text>
+
+  <rect x="640" y="132" width="150" height="150" rx="12" fill="#F0FDFA" stroke="#7BD9CB" stroke-width="1.5"/>
+  <text x="656" y="160" class="bt">TimescaleDB</text>
+  <text x="656" y="184" class="bl">séries temporelles</text>
+  <text x="656" y="202" class="sm">(extension Postgres)</text>
+
+  <path d="M202 207 C 216 202, 226 202, 237 207" class="flowT" marker-end="url(#chT)"/>
+  <path d="M392 207 C 406 202, 416 202, 427 207" class="flowT" marker-end="url(#chT)"/>
+  <path d="M602 207 C 616 202, 626 202, 637 207" class="flowT" marker-end="url(#chT)"/>
+
+  <!-- rangée B : données ouvertes -->
+  <text x="205" y="350" class="lab" fill="#7F9591">DONNÉES SANTÉ OUVERTES, SANS CLÉ API</text>
+  <rect x="40" y="360" width="330" height="100" rx="12" fill="#F8F9FB" stroke="#D6DAE3" stroke-width="1.5"/>
+  <text x="56" y="388" class="bt" fill="#334155">APIs santé publiques</text>
+  <text x="56" y="412" class="bl">pénuries FDA, notices OpenFDA</text>
+  <text x="56" y="430" class="bl">RSS ANSM, OpenPrescribing (NHS)</text>
+
+  <rect x="430" y="360" width="225" height="100" rx="12" fill="#F0FDFA" stroke="#7BD9CB" stroke-width="1.5"/>
+  <text x="446" y="388" class="bt">Ingestion Python</text>
+  <text x="446" y="412" class="bl">quotidien → bronze TimescaleDB</text>
+  <text x="446" y="430" class="bl">signaux pénurie, références</text>
+
+  <path d="M372 410 C 392 405, 406 405, 427 410" class="flowG" marker-end="url(#chG)"/>
+  <path d="M515 358 C 515 322, 700 330, 700 288" class="flowT" marker-end="url(#chT)"/>
+  <path d="M657 425 C 720 422, 760 402, 816 392" class="flowI" marker-end="url(#chI)"/>
+
+  <!-- colonne intelligence -->
+  <rect x="820" y="132" width="185" height="115" rx="12" fill="#EEF2FF" stroke="#B6BDF5" stroke-width="1.5"/>
+  <text x="836" y="158" class="bt" fill="#3730A3">Prévision Prophet</text>
+  <text x="836" y="182" class="bl">demande régionale</text>
+  <text x="836" y="200" class="bl">déduit les doses suspectes</text>
+  <text x="836" y="218" class="bl">alerte rupture ~ J+9</text>
+
+  <rect x="820" y="277" width="185" height="160" rx="12" fill="#EEF2FF" stroke="#B6BDF5" stroke-width="1.5"/>
+  <text x="836" y="303" class="bt" fill="#3730A3">Copilote RAG clinique</text>
+  <text x="836" y="327" class="bl">Ollama, phi3:mini</text>
+  <text x="836" y="345" class="bl">ChromaDB + bge-small</text>
+  <text x="836" y="363" class="bl">monographies FDA / ANSM</text>
+  <text x="836" y="381" class="bl">→ brief SBAR + citations</text>
+
+  <path d="M792 195 C 802 191, 808 191, 817 195" class="flowI" marker-end="url(#chI)"/>
+  <path d="M912 249 C 912 258, 912 265, 912 274" class="flowI" marker-end="url(#chI)"/>
+
+  <!-- colonne restitution -->
+  <rect x="1035" y="132" width="130" height="110" rx="12" fill="#FFF6ED" stroke="#F5C99B" stroke-width="1.5"/>
+  <text x="1049" y="158" class="bt" fill="#C2580C">Grafana</text>
+  <text x="1049" y="182" class="bl">alertes temps réel</text>
+  <text x="1049" y="200" class="bl">dashboards IoT</text>
+
+  <rect x="1035" y="277" width="130" height="160" rx="12" fill="#EFFBF5" stroke="#A7E3C6" stroke-width="1.5"/>
+  <text x="1049" y="303" class="bt" fill="#047857">App Streamlit</text>
+  <text x="1049" y="327" class="bl">UI pharmacien</text>
+  <text x="1049" y="345" class="bl">parc, prévisions</text>
+  <text x="1049" y="363" class="bl">copilote, SBAR</text>
+  <text x="1049" y="381" class="bl">validation 5B</text>
+
+  <path d="M1007 187 C 1017 183, 1023 183, 1032 187" class="flowG" marker-end="url(#chG)"/>
+  <path d="M1007 357 C 1017 353, 1023 353, 1032 357" class="flowG" marker-end="url(#chG)"/>
+
+  <!-- bande Dagster -->
+  <path d="M515 462 L515 486" class="dot"/>
+  <path d="M912 439 L912 486" class="dot"/>
+  <rect x="50" y="490" width="1100" height="58" rx="12" fill="#F8FAFC" stroke="#C9D4E0" stroke-width="1.5"/>
+  <text x="70" y="514" class="bt" fill="#334155">Dagster : orchestration</text>
+  <text x="70" y="532" class="sm">assets définis par le code</text>
+  <text x="330" y="514" class="bl">assets : ingestion open data → prévisions → backtests → index RAG</text>
+  <text x="330" y="532" class="bl">contrôles qualité par asset, matérialisations planifiées</text>
+
+  <!-- rangée du bas -->
+  <rect x="50" y="578" width="350" height="80" rx="12" fill="#F0FDFA" stroke="#7BD9CB" stroke-width="1.5"/>
+  <text x="70" y="602" class="bt">Stockage &amp; exécution</text>
+  <text x="70" y="622" class="bl">stockage objet MinIO, Docker Compose</text>
+  <text x="70" y="639" class="bl">100% OSS gratuit : tourne sur un laptop</text>
+
+  <rect x="425" y="578" width="350" height="80" rx="12" fill="#EFF5FF" stroke="#9CBCF0" stroke-width="1.5"/>
+  <text x="445" y="602" class="bt" fill="#1D4ED8">Portable cloud par design</text>
+  <text x="445" y="622" class="bl">Redpanda→MSK, Timescale→Timestream</text>
+  <text x="445" y="639" class="bl">Ollama→Bedrock : config, pas de réécriture</text>
+
+  <rect x="800" y="578" width="350" height="80" rx="12" fill="#F8F9FB" stroke="#D6DAE3" stroke-width="1.5"/>
+  <text x="820" y="602" class="bt" fill="#475569">Qualité &amp; CI</text>
+  <text x="820" y="622" class="bl">pytest, contrôles d'assets Dagster</text>
+  <text x="820" y="639" class="bl">GitHub Actions, journal d'audit immuable</text>
+
+</svg>

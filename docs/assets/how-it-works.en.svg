@@ -1,0 +1,101 @@
+<svg viewBox="0 0 800 760" width="800" height="760" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Comment Vigistock fonctionne, style croquis">
+  <title>Vigistock : du signal capteur à l'action clinique en cinq étapes</title>
+  <defs>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.2" fill="#E6EEED"/></pattern>
+    <style>
+      text { font-family:'Segoe UI',-apple-system,'Helvetica Neue',Arial,sans-serif; }
+      .h1 { font-size:24px; font-weight:700; fill:#134E4A; }
+      .h2 { font-size:12.5px; fill:#5C7470; }
+      .num { font-size:16px; font-weight:700; }
+      .st { font-size:14px; font-weight:700; fill:#134E4A; }
+      .sd { font-size:11.5px; fill:#46615D; }
+      .ft { font-size:13px; fill:#5C7470; font-style:italic; }
+      .arrow { fill:none; stroke-width:2; stroke-linecap:round; }
+    </style>
+  </defs>
+
+  <rect width="800" height="760" fill="#FFFFFF"/>
+  <rect width="800" height="760" fill="url(#dots)"/>
+
+  <!-- en-tête -->
+  <rect x="50" y="32" width="510" height="26" rx="6" fill="#99F6E4" opacity="0.5" transform="rotate(-0.6 305 45)"/>
+  <text x="58" y="53" class="h1">From sensor signal to clinical action</text>
+  <path d="M58 64 q 40 5 80 1 t 80 0 t 70 1" fill="none" stroke="#0F766E" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>
+  <text x="58" y="86" class="h2">The story Vigistock tells in 60 seconds: streaming + ML + LLM in hospital pharmacy</text>
+  <!-- étincelles -->
+  <path d="M716 44 l0 -12 M716 44 l0 12 M716 44 l-9 0 M716 44 l9 0" stroke="#7BD9CB" stroke-width="2" stroke-linecap="round"/>
+  <path d="M748 70 l0 -7 M748 70 l0 7 M748 70 l-5 0 M748 70 l5 0" stroke="#B6BDF5" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- étape 1 : capter (gauche) -->
+  <g transform="rotate(-1 260 158)">
+    <rect x="60" y="112" width="400" height="92" rx="14" fill="#F0FDFA" stroke="#7BD9CB" stroke-width="1.8"/>
+    <rect x="64" y="116" width="400" height="92" rx="14" fill="none" stroke="#7BD9CB" stroke-width="1" opacity="0.3"/>
+    <text x="106" y="142" class="st">Sense</text>
+    <text x="106" y="164" class="sd">A fridge sensor publishes temperature and humidity</text>
+    <text x="106" y="182" class="sd">every 30 s into Redpanda.</text>
+  </g>
+  <circle cx="66" cy="119" r="17" fill="#FFFFFF" stroke="#0F766E" stroke-width="2"/>
+  <ellipse cx="66" cy="119" rx="18.5" ry="16" fill="none" stroke="#0F766E" stroke-width="1" opacity="0.4" transform="rotate(-8 66 119)"/>
+  <text x="66" y="125" class="num" fill="#0F766E" text-anchor="middle">1</text>
+
+  <path d="M470 210 C 520 226, 558 216, 588 232" class="arrow" stroke="#7BD9CB"/>
+  <path d="M588 232 L575 229 M588 232 L581 221" class="arrow" stroke="#7BD9CB"/>
+
+  <!-- étape 2 : détecter (droite) -->
+  <g transform="rotate(0.8 540 288)">
+    <rect x="340" y="242" width="400" height="92" rx="14" fill="#FFF5F4" stroke="#F8B0A8" stroke-width="1.8"/>
+    <rect x="336" y="246" width="400" height="92" rx="14" fill="none" stroke="#F8B0A8" stroke-width="1" opacity="0.3"/>
+    <text x="386" y="272" class="st">Detect</text>
+    <text x="386" y="294" class="sd">2 h above 8 °C: the excursion is flagged and the</text>
+    <text x="386" y="312" class="sd">affected vaccine lot is marked suspect.</text>
+  </g>
+  <circle cx="346" cy="249" r="17" fill="#FFFFFF" stroke="#BE123C" stroke-width="2"/>
+  <ellipse cx="346" cy="249" rx="18.5" ry="16" fill="none" stroke="#BE123C" stroke-width="1" opacity="0.4" transform="rotate(7 346 249)"/>
+  <text x="346" y="255" class="num" fill="#BE123C" text-anchor="middle">2</text>
+
+  <path d="M330 340 C 280 356, 242 346, 212 362" class="arrow" stroke="#F8B0A8"/>
+  <path d="M212 362 L225 359 M212 362 L219 351" class="arrow" stroke="#F8B0A8"/>
+
+  <!-- étape 3 : prévoir (gauche) -->
+  <g transform="rotate(-0.7 260 418)">
+    <rect x="60" y="372" width="400" height="92" rx="14" fill="#EEF2FF" stroke="#B6BDF5" stroke-width="1.8"/>
+    <rect x="64" y="376" width="400" height="92" rx="14" fill="none" stroke="#B6BDF5" stroke-width="1" opacity="0.3"/>
+    <text x="106" y="402" class="st">Forecast</text>
+    <text x="106" y="424" class="sd">Prophet subtracts the suspect doses from regional</text>
+    <text x="106" y="442" class="sd">demand and predicts a stockout at D+9.</text>
+  </g>
+  <circle cx="66" cy="379" r="17" fill="#FFFFFF" stroke="#4F46E5" stroke-width="2"/>
+  <ellipse cx="66" cy="379" rx="18.5" ry="16" fill="none" stroke="#4F46E5" stroke-width="1" opacity="0.4" transform="rotate(-6 66 379)"/>
+  <text x="66" y="385" class="num" fill="#4F46E5" text-anchor="middle">3</text>
+
+  <path d="M470 470 C 520 486, 558 476, 588 492" class="arrow" stroke="#B6BDF5"/>
+  <path d="M588 492 L575 489 M588 492 L581 481" class="arrow" stroke="#B6BDF5"/>
+
+  <!-- étape 4 : recommander (droite) -->
+  <g transform="rotate(0.9 540 548)">
+    <rect x="340" y="502" width="400" height="92" rx="14" fill="#F4F1FF" stroke="#C5B5F7" stroke-width="1.8"/>
+    <rect x="336" y="506" width="400" height="92" rx="14" fill="none" stroke="#C5B5F7" stroke-width="1" opacity="0.3"/>
+    <text x="386" y="532" class="st">Recommend</text>
+    <text x="386" y="554" class="sd">A local RAG (Ollama + ChromaDB over the FDA &amp; ANSM</text>
+    <text x="386" y="572" class="sd">monographs) drafts a sourced substitution brief.</text>
+  </g>
+  <circle cx="346" cy="509" r="17" fill="#FFFFFF" stroke="#6D28D9" stroke-width="2"/>
+  <ellipse cx="346" cy="509" rx="18.5" ry="16" fill="none" stroke="#6D28D9" stroke-width="1" opacity="0.4" transform="rotate(8 346 509)"/>
+  <text x="346" y="515" class="num" fill="#6D28D9" text-anchor="middle">4</text>
+
+  <path d="M330 600 C 280 616, 242 606, 212 622" class="arrow" stroke="#C5B5F7"/>
+  <path d="M212 622 L225 619 M212 622 L219 611" class="arrow" stroke="#C5B5F7"/>
+
+  <!-- étape 5 : alerter (gauche) -->
+  <g transform="rotate(-0.8 260 678)">
+    <rect x="60" y="632" width="400" height="92" rx="14" fill="#EFFBF5" stroke="#A7E3C6" stroke-width="1.8"/>
+    <rect x="64" y="636" width="400" height="92" rx="14" fill="none" stroke="#A7E3C6" stroke-width="1" opacity="0.3"/>
+    <text x="106" y="662" class="st">Alert &amp; act</text>
+    <text x="106" y="684" class="sd">Grafana alerts in real time; the pharmacist validates</text>
+    <text x="106" y="702" class="sd">the SBAR brief in the Streamlit app.</text>
+  </g>
+  <circle cx="66" cy="639" r="17" fill="#FFFFFF" stroke="#047857" stroke-width="2"/>
+  <ellipse cx="66" cy="639" rx="18.5" ry="16" fill="none" stroke="#047857" stroke-width="1" opacity="0.4" transform="rotate(-7 66 639)"/>
+  <text x="66" y="645" class="num" fill="#047857" text-anchor="middle">5</text>
+
+</svg>
