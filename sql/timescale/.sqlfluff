@@ -1,0 +1,22 @@
+[sqlfluff]
+dialect = postgres
+max_line_length = 120
+exclude_rules = AM04, AM03, AM05, AL01, LT01, LT02, LT05, LT09, ST04, ST05, ST06, ST07, RF02, RF04, CV02, CP03
+# AM04: ambiguous column count (TimescaleDB returns variadic functions)
+# LT01/LT02: le DDL aligne types et contraintes en colonnes (style assume),
+#            la regle d'espacement unique les ecraserait
+# LT05: long lines in CREATE statements with comments
+# RF02: bare identifiers in Timescale function calls (e.g. add_retention_policy)
+# ST05 - "avoid subqueries": we use them in continuous aggregates
+# AL01/AM05/ST07/LT09 : alias implicites, JOIN nus et SELECT compacts,
+#                       style assume et homogene de ce DDL
+# CP03 : fonctions Timescale en minuscules (create_hypertable, time_bucket)
+
+[sqlfluff:indentation]
+tab_space_size = 4
+
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = upper
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower
